@@ -447,6 +447,45 @@ def check_audio_archive(archive_path, archive_extensions):
         print(f"Error checking archive {archive_path}: {e}")
         return False
     
+
+def check_davinci_archive(archive_path, archive_extensions):
+    try:
+        print(f"Checking archive for DaVinci Resolve project file: {archive_path}")
+        
+        if archive_path.lower().endswith('.zip'):
+            with zipfile.ZipFile(archive_path, 'r') as archive_file:
+                file_list = archive_file.namelist()
+                for file_name in file_list:
+                    base_name = os.path.basename(file_name).lower()
+                    if base_name == "project.drp" or file_name.lower().endswith('.dra'):
+                        print(f"Found 'project.drp' or '.dra' in zip archive: {file_name}")
+                        return True
+        
+        elif archive_path.lower().endswith('.rar'):
+            with rarfile.RarFile(archive_path, 'r') as archive_file:
+                file_list = archive_file.namelist()
+                for file_name in file_list:
+                    base_name = os.path.basename(file_name).lower()
+                    if base_name == "project.drp" or file_name.lower().endswith('.dra'):
+                        print(f"Found 'project.drp' or '.dra' in rar archive: {file_name}")
+                        return True
+        
+        elif archive_path.lower().endswith('.7z') and SUPPORT_7Z:
+            with py7zr.SevenZipFile(archive_path, mode='r') as archive_file:
+                file_list = archive_file.getnames()
+                for file_name in file_list:
+                    base_name = os.path.basename(file_name).lower()
+                    if base_name == "project.drp" or file_name.lower().endswith('.dra'):
+                        print(f"Found 'project.drp' or '.dra' in 7z archive: {file_name}")
+                        return True
+        
+        print(f"No 'project.drp' found in archive: {archive_path}")
+        return False
+    
+    except Exception as e:
+        print(f"Error checking archive {archive_path}: {e}")
+        return False
+        
 def main():
     # Use script directory (instead of os.getcwd())
     current_directory = script_directory
@@ -682,6 +721,14 @@ def main():
                     if move_file(file_path, sfx_directory):
                         directories_used.add(sfx_directory)
                         print(f"Archive containing only audio files (and possibly .txt) moved to sfx directory: {file_path}")
+                        continue
+
+                # Check for archives with 'project.drp' file
+                if check_davinci_archive(file_path, archive_extensions):
+                    create_target_directory(davinci_directory)
+                    if move_file(file_path, davinci_directory):
+                        directories_used.add(davinci_directory)
+                        print(f"Archive containing 'project.drp' moved to davinci directory: {file_path}")
                         continue
 
                 # Check for Font files in archives
