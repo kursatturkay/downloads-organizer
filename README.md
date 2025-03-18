@@ -15,20 +15,23 @@ Note: If send2trash is not available, empty folders will be deleted directly.
 
 usage: copy py file in downloads directory. and run it.
 
+# File Categorization and Destination Directories
 
-This script categorizes files based on their extensions and moves them to specific directories:
+This script organizes files based on their extensions and moves them to specific directories.
 
-    Image files (e.g., JPG, PNG, GIF) are placed in the image directory.
-    Document files (e.g., DOC, PDF, XLS) are placed in the document directory.
-    Ebook files (e.g., EPUB, MOBI, AZW) are placed in the ebook directory.
-    Substance files (e.g., SBSAR, SBS) are placed in the substance directory.
-    Brush files (e.g., ABR, BRUSH) are placed in the brush directory.
-    Font files (e.g., TTF, OTF) are placed in the font directory.
-    3D model files (e.g., FBX, OBJ, STL) are placed in the 3D model directory.
-    Executable files (e.g., EXE, MSI, BAT) are placed in the executable directory.
-    DaVinci Resolve files (e.g., SETTING) are placed in the DaVinci Resolve directory.
-    After Effects files (e.g., AEP, JSX) are placed in the After Effects directory.
-    Unity package files (e.g., UNITYPACKAGE) are placed in the Unity directory.
-    ZBrush files (e.g., ZMT, ZPR) are placed in the ZBrush directory.
-    Unreal Engine assets (e.g., UASSET, UPLUGIN) are placed in the Unreal Engine directory.
-    Mockup files (PSD and TXT) are placed in the mockup directory.
+## Categories and Destinations
+
+- **Image Files** (`.jpg`, `.png`, `.gif`, etc.) → `images/`
+- **Document Files** (`.doc`, `.pdf`, `.xls`, etc.) → `documents/`
+- **Ebook Files** (`.epub`, `.mobi`, `.azw`, etc.) → `ebooks/`
+- **Substance Files** (`.sbsar`, `.sbs`, etc.) → `substance/`
+- **Brush Files** (`.abr`, `.brush`, etc.) → `brushes/`
+- **Font Files** (`.ttf`, `.otf`, `.woff`, etc.) → `fonts/`
+- **3D Model Files** (`.fbx`, `.obj`, `.stl`, etc.) → `3d_models/`
+- **Executable Files** (`.exe`, `.msi`, `.bat`, etc.) → `executables/`
+- **DaVinci Resolve Files** (`.setting`) → `davinci_resolve/`
+- **After Effects Files** (`.aep`, `.jsx`, etc.) → `after_effects/`
+- **Unity Package Files** (`.unitypackage`) → `unity/`
+- **ZBrush Files** (`.zmt`, `.zpr`, etc.) → `zbrush/`
+- **Unreal Engine Assets** (`.uasset`, `.umap`, etc.) → `unreal_engine/`
+- **Mockup Files** (`.psd`, `.txt`) → `mockups/`
