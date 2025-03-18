@@ -1,6 +1,30 @@
 """
 File Organization and Directory Cleanup Script
 --------------------------
+
+# File Categorization and Destination Directories
+
+This script organizes files based on their extensions and moves them to specific directories.
+
+## Categories and Destinations
+
+- **Image Files** (`.jpg`, `.png`, `.gif`, etc.) → `images/`
+- **Document Files** (`.doc`, `.pdf`, `.xls`, etc.) → `documents/`
+- **Ebook Files** (`.epub`, `.mobi`, `.azw`, etc.) → `ebooks/`
+- **Substance Files** (`.sbsar`, `.sbs`, etc.) → `substance/`
+- **Brush Files** (`.abr`, `.brush`, etc.) → `brushes/`
+- **Font Files** (`.ttf`, `.otf`, `.woff`, etc.) → `fonts/`
+- **3D Model Files** (`.fbx`, `.obj`, `.stl`, etc.) → `3d_models/`
+- **Executable Files** (`.exe`, `.msi`, `.bat`, etc.) → `executables/`
+- **DaVinci Resolve Files** (`.setting`) → `davinci_resolve/`
+- **After Effects Files** (`.aep`, `.jsx`, etc.) → `after_effects/`
+- **Unity Package Files** (`.unitypackage`) → `unity/`
+- **ZBrush Files** (`.zmt`, `.zpr`, etc.) → `zbrush/`
+- **Unreal Engine Assets** (`.uasset`, `.umap`, etc.) → `unreal_engine/`
+- **Mockup Files** (`.psd`, `.txt`) → `mockups/`
+
+
+    
 This script:
 1. Categorizes files by type and moves them to relevant directories
 2. Identifies and moves ALL empty directories in the working folder to the recycle bin
@@ -354,12 +378,82 @@ def safe_delete_directory(directory, send2trash_available):
         print(f"Error removing directory {directory}: {e}")
         return False
     
+
+def handle_mockup_files(file_name, file_path, mockups_directory, directories_used):
+    """Check if 'mockup' is in the file name and move it to mockups directory if true."""
+    if "mockup" in file_name.lower():
+        create_target_directory(mockups_directory)
+        if move_file(file_path, mockups_directory):
+            directories_used.add(mockups_directory)
+            print(f"File/archive with 'mockup' in name moved to mockups directory: {file_path}")
+            return True  # Indicates the file was handled
+    return False  # Indicates the file was not handled
+
+def handle_audio_files(file_name, file_path, sfx_directory, directories_used):
+    """Check if the file is an audio file and move it to sfx directory if true."""
+    audio_extensions = ('.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a', '.wma', '.aiff', '.mid', '.midi')
+    if file_name.lower().endswith(audio_extensions):
+        create_target_directory(sfx_directory)
+        if move_file(file_path, sfx_directory):
+            directories_used.add(sfx_directory)
+            print(f"Audio file moved to sfx directory: {file_path}")
+            return True  # Indicates the file was handled
+    return False  # Indicates the file was not handled
+
+
+def check_audio_archive(archive_path, archive_extensions):
+    """Check if an archive contains only audio files or audio files plus .txt files."""
+    audio_extensions = ('.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a', '.wma', '.aiff', '.mid', '.midi')
+    allowed_extensions = audio_extensions + ('.txt',)  # Only audio and .txt allowed
+    
+    try:
+        print(f"Checking archive for audio content: {archive_path}")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Extract archive based on its type
+            if archive_path.lower().endswith('.zip'):
+                with zipfile.ZipFile(archive_path, 'r') as zip_ref:
+                    zip_ref.extractall(temp_dir)
+            elif archive_path.lower().endswith('.rar'):
+                with rarfile.RarFile(archive_path, 'r') as rar_ref:
+                    rar_ref.extractall(temp_dir)
+            elif archive_path.lower().endswith('.7z') and SUPPORT_7Z:
+                with py7zr.SevenZipFile(archive_path, mode='r') as sz_ref:
+                    sz_ref.extractall(temp_dir)
+            else:
+                return False  # Unsupported archive type
+            
+            # Check all files in the extracted directory
+            has_audio = False
+            for root, dirs, files in os.walk(temp_dir):
+                for file in files:
+                    file_lower = file.lower()
+                    # Check if it's an audio file
+                    if file_lower.endswith(audio_extensions):
+                        has_audio = True
+                    # If it's not an allowed extension (audio or .txt), fail
+                    elif not any(file_lower.endswith(ext) for ext in allowed_extensions):
+                        print(f"Found non-audio/non-txt file: {file}")
+                        return False
+            
+            # Return True only if at least one audio file was found
+            if has_audio:
+                print(f"Archive contains only audio files (and possibly .txt): {archive_path}")
+                return True
+            else:
+                print(f"No audio files found in archive: {archive_path}")
+                return False
+            
+    except Exception as e:
+        print(f"Error checking archive {archive_path}: {e}")
+        return False
+    
 def main():
     # Use script directory (instead of os.getcwd())
     current_directory = script_directory
     
     # Define target directories
     mockups_directory = os.path.join(current_directory, "__mockups__")
+    sfx_directory = os.path.join(current_directory, "__sfx__")  # New audio directory
     target_directory = os.path.join(current_directory, "__blenderaddons__")
     ue_directory = os.path.join(current_directory, "__ue__")
     blendfiles_directory = os.path.join(current_directory, "__blendfiles__")
@@ -449,6 +543,15 @@ def main():
             continue
         
         try:
+
+            # Check for "mockup" in file name first
+            if handle_mockup_files(file_name, file_path, mockups_directory, directories_used):
+                continue  # Skip to next file if handled
+
+            # Check for audio files
+            if handle_audio_files(file_name, file_path, sfx_directory, directories_used):
+                continue  # Skip to next file if handled
+
             # Process Font files
             if file_name.lower().endswith(font_extensions):
                 create_target_directory(font_directory)
@@ -573,6 +676,14 @@ def main():
                         # Continue to next file since we've already moved this archive
                         continue
                 
+                # Check for archives with only audio files or audio + .txt files
+                if check_audio_archive(file_path, archive_extensions):
+                    create_target_directory(sfx_directory)
+                    if move_file(file_path, sfx_directory):
+                        directories_used.add(sfx_directory)
+                        print(f"Archive containing only audio files (and possibly .txt) moved to sfx directory: {file_path}")
+                        continue
+
                 # Check for Font files in archives
                 if contains_file_in_archive(file_path, font_extensions, archive_extensions):
                     create_target_directory(font_directory)
